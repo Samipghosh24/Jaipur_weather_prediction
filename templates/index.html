@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function calculateAverages() {
+            const maxTemp = parseFloat(document.getElementById("maxTemp").value) || 0;
+            const minTemp = parseFloat(document.getElementById("minTemp").value) || 0;
+            const avgTemp = (maxTemp + minTemp) / 2;
+            document.getElementById("avgTemp").value = avgTemp.toFixed(2);
+
+            const maxHumid = parseFloat(document.getElementById("maxHumid").value) || 0;
+            const minHumid = parseFloat(document.getElementById("minHumid").value) || 0;
+            const avgHumid = (maxHumid + minHumid) / 2;
+            document.getElementById("avgHumid").value = avgHumid.toFixed(2);
+
+            const maxWind = parseFloat(document.getElementById("maxWind").value) || 0;
+            const minWind = parseFloat(document.getElementById("minWind").value) || 0;
+            const avgWind = (maxWind + minWind) / 2;
+            document.getElementById("avgWind").value = avgWind.toFixed(2);
+        }
+
+        async function getPrediction() {
+            try {
+                const data = {
+                    Max_Temperature: parseFloat(document.getElementById("maxTemp").value),
+                    Avg_Temperature: parseFloat(document.getElementById("avgTemp").value),
+                    Min_Temperature: parseFloat(document.getElementById("minTemp").value),
+                    Max_Humidity: parseFloat(document.getElementById("maxHumid").value),
+                    Avg_Humidity: parseFloat(document.getElementById("avgHumid").value),
+                    Min_Humidity: parseFloat(document.getElementById("minHumid").value),
+                    Max_Wind_Speed: parseFloat(document.getElementById("maxWind").value),
+                    Avg_Wind_Speed: parseFloat(document.getElementById("avgWind").value),
+                    Min_Wind_Speed: parseFloat(document.getElementById("minWind").value)
+                };
+        
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+        
+                if (!response.ok) throw new Error("Server Error!");
+        
+                const result = await response.json();
+        
+                document.getElementById("result").innerText = `
+        Predicted Temperature: ${result.predicted_temperature.toFixed(2)}°C
+        Predicted Humidity: ${result.predicted_humidity.toFixed(2)}%
+        Predicted Wind Speed: ${result.predicted_wind_speed.toFixed(2)} km/h
+                `;
+                let weatherType = '';
+                if (result.predicted_humidity > 75) {
+                    weatherType = 'cloudy';
+                } else {
+                    weatherType = 'sunny';
+                }
+
+                const weatherIcon = document.getElementById("weatherIcon");
+                if (weatherType === 'sunny') {
+                    weatherIcon.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" alt="Sunny" title="Sunny" width="64">`;
+                } else if (weatherType === 'cloudy') {
+                    weatherIcon.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/1163/1163624.png" alt="Cloudy" title="Cloudy" width="64">`;
+                } else {
+                    weatherIcon.innerHTML = '';
+                }
+        
+            } catch (error) {
+                document.getElementById("result").innerText = "Error getting prediction.";
+                document.getElementById("weatherIcon").innerHTML = '';
+                console.error(error);
+            }
+        }
+        
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather Prediction</h1>
+
+        <label>Max Temperature: <input type="number" id="maxTemp" oninput="calculateAverages()"></label>
+        <label>Min Temperature: <input type="number" id="minTemp" oninput="calculateAverages()"></label>
+        <input type="hidden" id="avgTemp">
+
+        <label>Max Humidity: <input type="number" id="maxHumid" oninput="calculateAverages()"></label>
+        <label>Min Humidity: <input type="number" id="minHumid" oninput="calculateAverages()"></label>
+        <input type="hidden" id="avgHumid">
+
+        <label>Max Wind Speed: <input type="number" id="maxWind" oninput="calculateAverages()"></label>
+        <label>Min Wind Speed: <input type="number" id="minWind" oninput="calculateAverages()"></label>
+        <input type="hidden" id="avgWind">
+
+        <button onclick="getPrediction()">Predict</button>
+        <p id="result"></p>
+        <div class="weather-icon" id="weatherIcon"></div>
+
+    </div>
+</body>
+
+
+</html>
